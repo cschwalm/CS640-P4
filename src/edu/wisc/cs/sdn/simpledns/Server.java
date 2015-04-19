@@ -20,7 +20,13 @@ public class Server {
 
 	}
 
-	public void processClientData() {
+	/**
+	 * This method obtains and deserialized exactly one DNS request.
+	 * This method currently blocks until a request is received.
+	 * 
+	 * @return A DNS object.
+	 */
+	public DNS processDNSRequest() {
 
 		byte[] buffer = new byte[BYTEBUFFER_SIZE];
 		DNS dns = null;
@@ -31,13 +37,8 @@ public class Server {
 
 			DatagramPacket data = new DatagramPacket(buffer, buffer.length);
 			serverSocket.receive(data);
-			System.out.println("got client data");
-
 			buffer = data.getData();
-			System.out.println("reading data");
-
 			dns = DNS.deserialize(buffer, data.getLength());
-			System.out.println(dns);
 			
 			serverSocket.close();
 
@@ -45,5 +46,7 @@ public class Server {
 			System.out.println("IO Error Occurred. Exiting...");
 			System.exit(1);
 		}
+		
+		return dns;
 	}
 }
