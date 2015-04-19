@@ -13,7 +13,7 @@
 	        <jar destfile="${ant.project.name}.jar">
 	            <manifest>
 	                <attribute name="SimpleDNS" 
-	                    value="edu.wisc.cs.sdn.simpledns" />
+	                    value="edu.wisc.cs.sdn.simpledns.SimpleDNS" />
 	                <attribute name="Class-Path" value="." />
 	            </manifest>
 	            <fileset dir="bin/" />
