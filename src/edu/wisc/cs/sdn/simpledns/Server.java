@@ -12,44 +12,35 @@ import edu.wisc.cs.sdn.simpledns.packet.DNS;
  *
  */
 public class Server {
-	
+
 	private static final int DNS_PORT = 8053;
 	private static final int BYTEBUFFER_SIZE = 28;
-	
-	
+
 	public Server() {
-		
+
 	}
-	
+
 	public void processClientData() {
-			
-		int bytesRead = 0;
-		Socket client;
+
 		byte[] buffer = new byte[BYTEBUFFER_SIZE];
 		DNS dns = null;
-		
+
 		try {
-		
-			ServerSocket soc = new ServerSocket(DNS_PORT);
+
+			DatagramSocket serverSocket = new DatagramSocket(DNS_PORT);
+
+			DatagramPacket data = new DatagramPacket(buffer, buffer.length);
+			serverSocket.receive(data);
+			System.out.println("got client data");
+
+			buffer = data.getData();
+			System.out.println("reading data");
+
+			dns = DNS.deserialize(buffer, data.getLength());
+			System.out.println(dns);
 			
-			if ((client = soc.accept()) != null) {
-				
-				InputStream data = client.getInputStream();
-				System.out.println("got client data");
-				
-				while(bytesRead != -1)
-				{
-					bytesRead = data.read(buffer, 0, BYTEBUFFER_SIZE);
-					System.out.println("reading data");
-				}
-				
-				dns = DNS.deserialize(buffer, bytesRead);
-				System.out.println(dns);
-				
-				client.close();
-				soc.close();		
-			}		
-		
+			serverSocket.close();
+
 		} catch (IOException ex) {
 			System.out.println("IO Error Occurred. Exiting...");
 			System.exit(1);
