@@ -4,6 +4,9 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.SocketException;
 import java.util.ArrayList;
 
 import edu.wisc.cs.sdn.simpledns.packet.DNS;
@@ -17,20 +20,22 @@ import edu.wisc.cs.sdn.simpledns.packet.DNSQuestion;
 public class SimpleDNS {
 
 	public static Server server;
-	public final static String ROOT_NS = "198.41.0.4";
+	public static String rootNs; //198.41.0.4
 	public static String csvPath;
 	public static ArrayList<EC2Entry> entries = new ArrayList<EC2Entry>();
+	
+	protected static InetAddress clientIp = null;
+	protected static int clientPort = 0;
 
 	public static void main(String[] args) {
 
 		server = new Server();
-		if(args.length != 4)
-		{
+		if(args.length != 4) {
 			System.out.println("usage: -r <root sever ip> -e <ec2 csv>");
 			System.exit(0);
 		}
 
-		//		ROOT_NS = args[1];
+		rootNs = args[1];
 		csvPath = args[3];
 
 		// parse the CSV file
@@ -55,23 +60,34 @@ public class SimpleDNS {
 			br.close();
 		} 
 		catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
 		while (true) {
+			
+			DatagramSocket serverSocket = null;
+			
+			try {
+				
+				serverSocket = new DatagramSocket(Server.CUSTOM_DNS_PORT);
+				
+			} catch (SocketException e) {
+				System.out.println("IO Error Occurred. Exiting...");
+				System.exit(1);
+			}
 
-			DNS dns = server.processDNSRequest();
+			DNS dns = server.processDNSRequest(serverSocket);
+			
 			byte opcode = dns.getOpcode();
 			if (dns.getQuestions().size() <= 0) {
 				continue;
 			}
 
 			DNSQuestion question = dns.getQuestions().get(0);
+			String initialDomain = question.getName();
 
 			/* Skip Invalid Record Types */
 			if (opcode != DNS.OPCODE_STANDARD_QUERY && 
@@ -81,8 +97,10 @@ public class SimpleDNS {
 			}
 
 			/* Get Response From Root NS */
-			DNS nsResponse = server.forwardRequest(dns, ROOT_NS);
-			System.out.println(nsResponse);
+			DNS nsResponse = server.resolveDNS(dns, rootNs, initialDomain);
+			server.returnDNSRequest(serverSocket, nsResponse);
+			
+			serverSocket.close();
 		}
 	}
 }
