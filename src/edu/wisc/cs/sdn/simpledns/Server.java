@@ -15,7 +15,7 @@ public class Server {
 
 	private static final int CUSTOM_DNS_PORT = 8053;
 	private static final int DNS_PORT = 53;
-	private static final int BYTEBUFFER_SIZE = 28;
+	private static final int BYTEBUFFER_SIZE = 1024;
 
 	public Server() {
 
