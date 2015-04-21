@@ -1,0 +1,16 @@
+1
+	a. 10 DNS lookups, 3 of them to the same domain name.
+	b. Name Server Queried				Records Returned
+		a.root-servers.net			com, NS, a.gtld-servers.net, 
+							a.gtld-servers.net, A, 192.5.6.30
+		a.gtld-servers.net			pinterest.com, NS, ns-577.awsdns-08.net, 
+							ns-577.awsdns-08.net, A, 205.251.194.65
+		ns-577.awsdns-08.net			pinterest.com, A, 50.17.251.14
+	
+2.
+	a. All of the pinterest.com A records were located in EC2 ranges
+	b. none did
+	c. 57 to s-media-cache-ak0.pinimg.com
+		15 to s-passets-cache-ak0.pinimg.com
+		1 to s-static.ak.facebook.com
+	d. 57 objects were already stored
