@@ -31,12 +31,11 @@ public class DNSRdataText implements DNSRdata {
 			newString += s;
 		}
 		
-		byte[] data = new byte[newString.length() + 1 + (newString.length() > 0 ? 1 : 0)];
+		byte[] data = new byte[newString.length() + ((newString.length() > 0) ? 1 : 0)];
 		ByteBuffer bb = ByteBuffer.wrap(data);
 		
 		bb.put((byte)(newString.length()));
 		bb.put(newString.getBytes(StandardCharsets.US_ASCII));
-		bb.put((byte)0);
 		
 		return data;
 	}
