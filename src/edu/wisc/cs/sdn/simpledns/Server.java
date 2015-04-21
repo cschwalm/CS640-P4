@@ -4,6 +4,7 @@ import java.io.*;
 import java.net.*;
 
 import edu.wisc.cs.sdn.simpledns.packet.DNS;
+import edu.wisc.cs.sdn.simpledns.packet.DNSQuestion;
 import edu.wisc.cs.sdn.simpledns.packet.DNSResourceRecord;
 
 /**
@@ -16,7 +17,7 @@ public class Server {
 
 	protected static final int CUSTOM_DNS_PORT = 8053;
 	private static final int DNS_PORT = 53;
-	private static final int BYTEBUFFER_SIZE = 1024;
+	private static final int BYTEBUFFER_SIZE = 1472;
 
 	public Server() {
 
@@ -45,7 +46,7 @@ public class Server {
 			dns = DNS.deserialize(buffer, data.getLength());
 			
 		} catch (IOException ex) {
-			System.out.println("IO Error Occurred. Exiting...");
+			System.out.println("IO Error 2 Occurred. Exiting...");
 			System.exit(1);
 		}
 		
@@ -68,7 +69,7 @@ public class Server {
 			serverSocket.send(send);
 
 		} catch (IOException ex) {
-			System.out.println("IO Error Occurred. Exiting...");
+			System.out.println("IO Error 3 Occurred. Exiting...");
 			System.exit(1);
 		}
 	}
@@ -104,7 +105,7 @@ public class Server {
 			serverSocket.close();
 			
 		} catch (IOException ex) {
-			System.out.println("IO Error Occurred. Exiting...");
+			System.out.println("IO Error 4 Occurred. Exiting... - " + ex.getMessage());
 			System.exit(1);
 		}
 		
@@ -114,7 +115,7 @@ public class Server {
 			
 			for (DNSResourceRecord potMatch : dns.getAnswers()) {
 				
-				 if (potMatch.getType() == DNS.TYPE_A) {
+				 if (potMatch.getType() == DNS.TYPE_A || potMatch.getType() == DNS.TYPE_CNAME) {
 					 answer = potMatch;
 				 }
 			}
@@ -124,18 +125,42 @@ public class Server {
 			
 			for (DNSResourceRecord potMatch : dns.getAdditional()) {
 
-				if (potMatch.getType() == DNS.TYPE_A) {
+				if (potMatch.getType() == DNS.TYPE_A || potMatch.getType() == DNS.TYPE_CNAME) {
 					answer = potMatch;
 				}
 			}		
 		}
 		
-		if (answer.getName().equals(initialDomain)) {
-			
-			return dns;
+		if (answer == null) {
+			return null;
 		}
 		
-		dns = this.resolveDNS(request, answer.getData().toString(), initialDomain);
+		if ( (answer.getName().equals(initialDomain) && answer.getType() != DNS.TYPE_CNAME) || 
+				request.isRecursionDesired() == false) {
+			
+			return dns;
+		}		
+						
+		if (answer.getType() == DNS.TYPE_CNAME) {
+			
+			DNS newRequest = new DNS();
+			DNSQuestion newQuestion = new DNSQuestion();
+			
+			newRequest.setOpcode(DNS.OPCODE_STANDARD_QUERY);
+			newRequest.setRecursionDesired(true);
+			
+			newQuestion.setClass(DNS.CLASS_IN);
+			newQuestion.setName(answer.getData().toString());
+			newQuestion.setType(DNS.TYPE_A);
+			
+			newRequest.getQuestions().add(newQuestion);
+			
+			dns = this.resolveDNS(newRequest, SimpleDNS.rootNs, answer.getData().toString());
+		
+		} else {
+			
+			dns = this.resolveDNS(request, answer.getData().toString(), initialDomain);
+		}
 		
 		return dns;
 	}
